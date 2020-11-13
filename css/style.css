@@ -1,0 +1,49 @@
+body {
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-top: 1%;
+    text-align: center;
+}
+
+.container {
+    /* overflow: auto; */
+    text-align: center;
+    /* display: inline-grid; */
+}
+
+h2 {
+    text-align: center;
+}
+
+form {
+    margin-bottom: 5%;
+}
+
+/*.graph {
+    padding-left: 20%;
+    padding-right: 25%;
+}
+
+label {
+    text-align: center;
+    width: 25%;
+    float: left;
+}
+
+select {
+    margin-left: 1%;
+    width: 50%;
+    float: left;
+    border-color: black;
+}
+
+button {
+    margin-left: 1%;
+    padding: 1px;
+    text-align: center;
+    width: 10%;
+    float: left;
+    background-color: gray;
+    border-width: 0;
+    border-radius: 100%;
+} */
