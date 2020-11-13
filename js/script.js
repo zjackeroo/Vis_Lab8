@@ -1,191 +1,70 @@
 Promise.all([ // load multiple files
-	d3.json('./data/airports.json'),
-	d3.json('./data/worldmap.json')
-]).then(([airports, topoMap])=>{
+	d3.csv('./data/driving.csv')
+]).then(([driving])=>{
 
-    const geoMap = topojson.feature(topoMap, topoMap.objects.countries).features;
-    console.log("airports=", airports);
-    console.log("geoMap=", geoMap);
+    console.log("driving=", driving);
 
-    const margin = {top: 20, right: 20, bottom: 20, left: 20};
+    const margin = {top: 30, right: 50, bottom: 30, left: 50};
     const width = 720 - margin.left - margin.right,
-        height = 360 - margin.top - margin.bottom;
-
-    const projection = d3.geoMercator()
-                            .fitExtent([[0,0], [width,height]], topojson.feature(topoMap, topoMap.objects.countries));
-
-    const path = d3.geoPath()
-                    .projection(projection);
+        height = 480 - margin.top - margin.bottom;
     
-    // const color = d3.scaleSequential(d3.interpolateBlues)
-    //                 .domain(d3.extent(topoMap, d=>positive));
-
     const svg = d3.select('.nodeGram')
-                    .append('svg')
-                    .attr("viewBox", [0,0,width,height]);
+        .append('svg')
+        .attr("viewBox", [0,0,width,height]);
     
-    const circleScale = d3.scaleLinear()
-                        .domain(d3.extent(airports.nodes, d=>d.passengers))
-                        .range([3,9]);
+    const xScale = d3.scaleLinear()
+        .domain([3500,10500])
+        // .domain(d3.extent(driving, d=>d.miles)).nice()
+        .range([margin.left, width-margin.left]);
+    const yScale = d3.scaleLinear()
+        .domain(d3.extent(driving, d=>d.gas)).nice()
+        .range([height-margin.bottom, margin.top]);
 
-    const force = d3.forceSimulation(airports.nodes)
-                    .force("charge", d3.forceManyBody().strength(-15))
-                    .force("center", d3.forceCenter(width/2, height/2))
-                    .force("link", d3.forceLink(airports.links).distance(50))
-                    .force("collide", d3.forceCollide().radius(d=>circleScale(d.passengers)));
-                    
-    const links = svg
-                    .attr("stroke", "black")
-                    .attr("stroke-opacity", 0.6)
-                    .selectAll("line")
-                    .data(airports.links)
-                    .join("line")
-                    .attr("stroke-width", 1)
-                    .attr("stroke", "black");
-
-    // svg.append("g")
-    //     .attr("transform", "translate(0,0)")
-    //     .append(
-    //         () => legend({color, title: data.title, width: 260})
-    //     );
-    
-    svg.append("g")
-        .selectAll('path')
-        .data(geoMap)
-        .join("path")
-        .attr("d", path)
-        // .attr("fill", d => color(data.get(d.id)))
-        .append("title")
-        // .text(d => `${d.properties.name}, 
-        //             ${states.get(d.id.slice(0, 2)).name}
-        //             ${format(data.get(d.id))}`
+    xAxis = g => g
+        .attr("transform", `translate(0,${height - margin.bottom})`)
+        .call(d3.axisBottom(xScale).ticks(width / 80))
+        // .call(g => g.select(".domain").remove())
+        // .call(g => g.selectAll(".tick line").clone()
+        //     .attr("y2", -height)
+        //     .attr("stroke-opacity", 0.1))
+        // .call(g => g.append("text")
+        //     .attr("x", width - 4)
+        //     .attr("y", -4)
+        //     .attr("font-weight", "bold")
+        //     .attr("text-anchor", "end")
+        //     .attr("fill", "black")
+        //     .text(driving.miles)
+        //     .call(halo)
+        // );
+    yAxis = g => g
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(d3.axisLeft(yScale).ticks(null, "$.2f"))
+        // .call(g => g.select(".domain").remove())
+        // .call(g => g.selectAll(".tick line").clone()
+        //     .attr("x2", width)
+        //     .attr("stroke-opacity", 0.1))
+        // .call(g => g.select(".tick:last-of-type text").clone()
+        //     .attr("x", 4)
+        //     .attr("text-anchor", "start")
+        //     .attr("font-weight", "bold")
+        //     .attr("fill", "black")
+        //     .text(driving.gas)
+        //     .call(halo)
         // );
     
-    svg.append("path")
-        .datum(topojson.mesh(topoMap, topoMap.objects.countries, (a, b) => a !== b))
-        .attr('fill', 'none')
-        .attr('stroke', 'white')
-        .attr('stroke-linejoin', 'round')
-        // .attr("class", "subunit-boundary")
-        .attr("d", path);
-   
-    drag = simulation => {
-        function dragstarted(event) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            event.subject.fx = event.subject.x;
-            event.subject.fy = event.subject.y;
-        }
-        
-        function dragged(event) {
-            event.subject.fx = event.x;
-            event.subject.fy = event.y;
-        }
-        
-        function dragended(event) {
-            if (!event.active) simulation.alphaTarget(0);
-            event.subject.fx = null;
-            event.subject.fy = null;
-        }
-        
-        return d3.drag()
-                    .on("start", dragstarted)
-                    .on("drag", dragged)
-                    .on("end", dragended);
-    }
+    svg.append("g")
+        .call(xAxis);
+    svg.append("g")
+        .call(yAxis);
 
-    nodes = svg.selectAll("circle")
-                        .data(airports.nodes)
-                        .join("circle")
-                        .attr("fill", "salmon")
-                        .attr("r", d=>circleScale(d.passengers))
-                        .call(drag(force));
-    
-    // nodes.append("title").text(d => d.name);
-
-    force.on("tick", ()=>{
-        nodes
-            .attr("cx", d=>{return d.x;})
-            .attr("cy", d=>{return d.y;});
-        links
-            .attr("x1", d=>{return d.source.x;})
-            .attr("y1", d=>{return d.source.y;})
-            .attr("x2", d=>{return d.target.x;})
-            .attr("y2", d=>{return d.target.y;});
-    });
-
-    d3.selectAll(".button").on("change", event=>{
-        visType = event.target.value; // selected button
-        switchLayout();
-    });
-
-    function switchLayout() {
-        if (visType === "map") { // Map layout
-            console.log("viewing Map...");
-            // stop the simulation
-            // drag.dragstarted.filter(event => visType === "force");
-
-            // set the positions of links and nodes based on geo-coordinates
-            nodes = svg.selectAll("circle")
-                                .data(airports.nodes)
-                                .join("circle")
-                                .attr("fill", "salmon")
-                                .attr("r", d=>circleScale(d.passengers));
-
-            nodes.append("title").text(d => d.name);
-
-            force.on("tick", ()=>{
-                nodes
-                    .transition()
-                    .duration(50)
-                    .attr("cx", d=>projection([d.longitude, d.latitude])[0])
-                    .attr("cy", d=>projection([d.longitude, d.latitude])[1]);
-                links
-                    .transition()
-                    .duration(50)
-                    .attr('opacity', 0)
-                    .attr("x1", d=>{return d.source.x;})
-                    .attr("y1", d=>{return d.source.y;})
-                    .attr("x2", d=>{return d.target.x;})
-                    .attr("y2", d=>{return d.target.y;});
-            });
-            // set the map opacity to 1
-            svg.selectAll('path')
-                .transition()
-                .duration(500)
-                .attr('opacity', 1);
-            
-        } else { // Force layout
-            console.log("viewing Force...");
-            // restart the simulation
-            // set the map opacity to 0
-            svg.selectAll('path')
-                .transition()
-                .duration(500)
-                .attr('opacity', 0);
-            
-            nodes = svg.selectAll("circle")
-                        .data(airports.nodes)
-                        .join("circle")
-                        .attr("fill", "salmon")
-                        .attr("r", d=>circleScale(d.passengers))
-                        .call(drag(force));
-            
-            force.on("tick", ()=>{
-                nodes
-                    .transition()
-                    .duration(50)
-                    .attr("cx", d=>{return d.x;})
-                    .attr("cy", d=>{return d.y;});
-                links
-                    .transition()
-                    .duration(50)
-                    .attr('opacity', 1)
-                    .attr("x1", d=>{return d.source.x;})
-                    .attr("y1", d=>{return d.source.y;})
-                    .attr("x2", d=>{return d.target.x;})
-                    .attr("y2", d=>{return d.target.y;});
-            });
-        }
-    }
-
+    svg.append("g")
+        .attr("fill", "white")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+      .selectAll("circle")
+      .data(driving)
+      .join("circle")
+        .attr("cx", d => xScale(d.miles))
+        .attr("cy", d => yScale(d.gas))
+        .attr("r", 3);
 })
