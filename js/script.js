@@ -20,12 +20,6 @@ Promise.all([ // load multiple files
         .domain(d3.extent(driving, d=>d.gas)).nice()
         .range([height-margin.bottom, margin.top]);
 
-    line = d3.line()
-        .curve(d3.curveCatmullRom)
-        .x(d => xScale(d.miles))
-        .y(d => yScale(d.gas));
-    const l = length(line(driving));
-
     xAxis = g => g
         .attr("transform", `translate(0,${height - margin.bottom})`)
         .call(d3.axisBottom(xScale).ticks(width / 80))
@@ -85,6 +79,11 @@ Promise.all([ // load multiple files
         .each(position)
         .call(halo);  
 
+    const line = d3.line()
+        .curve(d3.curveCatmullRom)
+        .x(d => xScale(d.miles))
+        .y(d => yScale(d.gas));
+    const l = length(line(driving));
     svg.append("path")
         .datum(driving)
         .attr("fill", "none")
@@ -95,45 +94,44 @@ Promise.all([ // load multiple files
         .attr("stroke-dasharray", `0,${l}`)
         .attr("d", line)
         .transition()
-        .duration(4000)
+        .duration(3000)
         .ease(d3.easeLinear)
         .attr("stroke-dasharray", `${l},${l}`);
-
-    function position(d) {
-        const t = d3.select(this);
-        switch (d.side) {
-            case "top":
-            t.attr("text-anchor", "middle").attr("dy", "-0.7em");
-            break;
-            case "right":
-            t.attr("dx", "0.5em")
-                .attr("dy", "0.32em")
-                .attr("text-anchor", "start");
-            break;
-            case "bottom":
-            t.attr("text-anchor", "middle").attr("dy", "1.4em");
-            break;
-            case "left":
-            t.attr("dx", "-0.5em")
-                .attr("dy", "0.32em")
-                .attr("text-anchor", "end");
-            break;
-        }
-    }
-
-    function halo(text) {
-        text
-            .select(function() {
-                return this.parentNode.insertBefore(this.cloneNode(true), this);
-            })
-            .attr("fill", "none")
-            .attr("stroke", "white")
-            .attr("stroke-width", 4)
-            .attr("stroke-linejoin", "round");
-    }
-
-    function length(path) {
-        return d3.create("svg:path").attr("d", path).node().getTotalLength();
-    }
-
 })
+
+function position(d) {
+    const t = d3.select(this);
+    switch (d.side) {
+        case "top":
+        t.attr("text-anchor", "middle").attr("dy", "-0.7em");
+        break;
+        case "right":
+        t.attr("dx", "0.5em")
+            .attr("dy", "0.32em")
+            .attr("text-anchor", "start");
+        break;
+        case "bottom":
+        t.attr("text-anchor", "middle").attr("dy", "1.4em");
+        break;
+        case "left":
+        t.attr("dx", "-0.5em")
+            .attr("dy", "0.32em")
+            .attr("text-anchor", "end");
+        break;
+    }
+}
+
+function halo(text) {
+    text
+        .select(function() {
+            return this.parentNode.insertBefore(this.cloneNode(true), this);
+        })
+        .attr("fill", "none")
+        .attr("stroke", "white")
+        .attr("stroke-width", 4)
+        .attr("stroke-linejoin", "round");
+}
+
+function length(path) {
+    return d3.create("svg:path").attr("d", path).node().getTotalLength();
+}

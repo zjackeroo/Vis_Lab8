@@ -8,7 +8,8 @@ body {
 .container {
     /* overflow: auto; */
     text-align: center;
-    /* display: inline-grid; */
+    width: 720px;
+    height: 480px;
 }
 
 h2 {
