@@ -1,8 +1,18 @@
-Promise.all([ // load multiple files
-	d3.csv('./data/driving.csv')
-]).then(([driving])=>{
+// Promise.all([ // load multiple files
+// 	d3.csv('./data/driving.csv')
+// ]).then(([driving])=>{
 
-    console.log("driving=", driving);
+data = d3.csv('./data/driving.csv', d3.autotype).then(driving=>{
+
+    console.log("driving data =", driving);
+
+    ///////////////////////////// Test Block /////////////////////////////
+    // testRange = d3.extent(driving, d=>{
+    //     console.log(typeof(parseFloat(d.miles)))
+    //     return parseFloat(d.miles);
+    // });
+    // console.log("test range =", testRange)
+    ///////////////////////////// Test Block /////////////////////////////
 
     const margin = {top: 30, right: 50, bottom: 30, left: 50};
     const width = 720 - margin.left - margin.right,
@@ -11,10 +21,10 @@ Promise.all([ // load multiple files
     const svg = d3.select('.nodeGram')
         .append('svg')
         .attr("viewBox", [0,0,width,height]);
-    
+
     const xScale = d3.scaleLinear()
-        .domain([3500,10500])
-        // .domain(d3.extent(driving, d=>d.miles)).nice()
+        // .domain([3500,10500])
+        .domain(d3.extent(driving, d=>parseFloat(d.miles))).nice()
         .range([margin.left, width-margin.left]);
     const yScale = d3.scaleLinear()
         .domain(d3.extent(driving, d=>d.gas)).nice()
@@ -61,23 +71,28 @@ Promise.all([ // load multiple files
         .attr("fill", "white")
         .attr("stroke", "black")
         .attr("stroke-width", 1)
-      .selectAll("circle")
-      .data(driving)
-      .join("circle")
-        .attr("cx", d => xScale(d.miles))
-        .attr("cy", d => yScale(d.gas))
+        .selectAll("circle")
+        .data(driving)
+        .join("circle")
+        .attr("cx", d=>xScale(d.miles))
+        .attr("cy", d=>yScale(d.gas))
         .attr("r", 3);
 
-    const label = svg.selectAll("text")
+    const label = svg.selectAll(".label")
         .data(driving)
         .join("g")
         .append("text")
-        .text(d=>d.year)
+        .text(d=>{
+            // console.log("year =", d.year);
+            // console.log("x =", d.miles);
+            // console.log("y =", d.gas);
+            return d.year;
+        })
         .attr("font-size", 10)
         .attr("x", d=>xScale(d.miles))
         .attr("y", d=>yScale(d.gas))
         .each(position)
-        .call(halo);  
+        .call(halo);
 
     const line = d3.line()
         .curve(d3.curveCatmullRom)
